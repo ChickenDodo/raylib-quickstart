@@ -1,54 +1,44 @@
-/*
-Raylib example file.
-This is an example main file for a simple raylib project.
-Use this as a starting point or replace it with your code.
-
-by Jeffery Myers is marked with CC0 1.0. To view a copy of this license, visit https://creativecommons.org/publicdomain/zero/1.0/
-
-*/
-
 #include "raylib.h"
+#include "raygui.h"//remove once the slider code is out of here
+#include "resource_dir.h"
+#include "PCG.h" // Import our new module
 
-#include "resource_dir.h"	// utility header for SearchAndSetResourceDir
+float sliderValue = 50.0f; // Initial value
+Rectangle sliderRec = { 100, 100, 200, 20 };
 
-int main ()
-{
-	// Tell the window to use vsync and work on high DPI displays
-	SetConfigFlags(FLAG_VSYNC_HINT | FLAG_WINDOW_HIGHDPI);
+int main() {
+    SetConfigFlags(FLAG_VSYNC_HINT | FLAG_WINDOW_HIGHDPI);
+    InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Construct Map Editor");
 
-	// Create the window and OpenGL context
-	InitWindow(800, 600, "Hello Raylib");
+    TileType tileArray[MAP_ROWS][MAP_COLUMNS] = { 0 };
+    PCG_CreateMap(tileArray);
 
-	// Utility function from resource_dir.h to find the resources folder and set it as the current working directory so we can load from it
-	SearchAndSetResourceDir("resources");
+    SearchAndSetResourceDir("resources");//needed to add this to find wabbit in folder
+    Texture wabbit = LoadTexture("wabbit_alpha.png");
+    Vector2 wabbitPosition = { (float)SCREEN_WIDTH / 2, (float)SCREEN_HEIGHT / 2 };
 
-	// Load a texture from the resources directory
-	Texture wabbit = LoadTexture("wabbit_alpha.png");
-	
-	// game loop
-	while (!WindowShouldClose())		// run the loop until the user presses ESCAPE or presses the Close button on the window
-	{
-		// drawing
-		BeginDrawing();
+    while (!WindowShouldClose()) {
+        BeginDrawing();
+        ClearBackground(BLACK);
 
-		// Setup the back buffer for drawing (clear color and depth buffers)
-		ClearBackground(BLACK);
+        PCG_DrawMap(tileArray);
+        DrawText("Construct Map Editor", 20, 20, 20, WHITE);
+        PCG_DrawGUI(tileArray);
+        
+        if (IsKeyDown(RIGHT)) wabbitPosition.x += 5.0f;
+        if (IsKeyDown(LEFT)) wabbitPosition.x -= 5.0f;
+        if (IsKeyDown(UP)) wabbitPosition.y -= 5.0f;
+        if (IsKeyDown(DOWN)) wabbitPosition.y += 5.0f;
 
-		// draw some text using the default font
-		DrawText("Hello Raylib", 200,200,20,WHITE);
+        DrawTexture(wabbit, wabbitPosition.x, wabbitPosition.y, WHITE);
 
-		// draw our texture to the screen
-		DrawTexture(wabbit, 400, 200, WHITE);
-		
-		// end the frame and get ready for the next one  (display frame, poll input, etc...)
-		EndDrawing();
-	}
+        // Draws the slider and updates 'sliderValue' based on user interaction
+        GuiSlider(sliderRec, "Min", "Max", &sliderValue, 0.0f, 100.0f);
+        DrawText(TextFormat("Value: %.2f", sliderValue), 100, 130, 20, WHITE);
 
-	// cleanup
-	// unload our texture so it can be cleaned up
-	UnloadTexture(wabbit);
-
-	// destroy the window and cleanup the OpenGL context
-	CloseWindow();
-	return 0;
+        EndDrawing();
+    }
+    UnloadTexture(wabbit);
+    CloseWindow();
+    return 0;
 }
