@@ -1,21 +1,48 @@
 #include "PCG.h"
 #include <stdio.h>
 
+// globals
+float g_grassPercentage = 50.0f;  
+float g_hillPercentage = 50.0f;
+static char g_text;
+    
 // ============================================= 
 // void PCG_CreateMap(TileType _tileArray[MAP_ROWS][MAP_COLUMNS])
 // ============================================= 
-void PCG_CreateMap(TileType _tileArray[MAP_ROWS][MAP_COLUMNS]) {
-    for (int y = 0; y < MAP_ROWS; y++) {
-        for (int x = 0; x < MAP_COLUMNS; x++) {
+void PCG_CreateMap(TileType _tileArray[MAP_ROWS][MAP_COLUMNS])
+{
+    for (int y = 0; y < MAP_ROWS; y++)
+    {
+        for (int x = 0; x < MAP_COLUMNS; x++)
+        {
+            // -------------------------
+            // 1. TERRAIN GENERATION
+            // -------------------------
 
-            //get a randomly generatred int variable to use as a decider for tile type generation
-            int r = GetRandomValue(0, 99);
-
-            if (r < 80)
-                _tileArray[y][x] = (TILE_TYPE_GRASS);
-
+            if (y >= MAP_ROWS - 3)
+            {
+                _tileArray[y][x] = TILE_TYPE_SAND;
+            }
             else
-                _tileArray[y][x] = (TILE_TYPE_ROCK);
+            {
+                int roll = GetRandomValue(0, 99);
+
+                if (roll < g_grassPercentage)
+                    _tileArray[y][x] = TILE_TYPE_GRASS;
+                else
+                    _tileArray[y][x] = TILE_TYPE_ROCK;
+            }
+
+            // -------------------------
+            // 2. TINT GENERATION
+            // -------------------------
+
+            int tintRoll = GetRandomValue(0, 99);
+
+            if (tintRoll < g_hillPercentage)
+                _tileTint[y][x] = GRAY;
+            else
+                _tileTint[y][x] = WHITE;
         }
     }
 }
@@ -29,6 +56,7 @@ Color PCG_GetTileColor(TileType tileType) {
     switch (tileType) {
     case TILE_TYPE_GRASS: return GRASS_COLOR;
     case TILE_TYPE_ROCK: return ROCK_COLOR;
+    case TILE_TYPE_SAND: return SAND_COLOR;
     default: return UNKNOWN_COLOR;
     }
 }
@@ -37,10 +65,42 @@ Color PCG_GetTileColor(TileType tileType) {
 // ============================================= 
 // void PCG_DrawMap(TileType _tileArray[MAP_ROWS][MAP_COLUMNS])
 // ============================================= 
-void PCG_DrawMap(TileType _tileArray[MAP_ROWS][MAP_COLUMNS]) {
+//void PCG_DrawMap(TileType _tileArray[MAP_ROWS][MAP_COLUMNS]) {
+//    for (int y = 0; y < MAP_ROWS; y++) {
+//        for (int x = 0; x < MAP_COLUMNS; x++) {
+//            DrawRectangle(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE, PCG_GetTileColor(_tileArray[y][x]));
+//        }
+//    }
+//}
+
+void PCG_DrawMap(TileType _tileArray[MAP_ROWS][MAP_COLUMNS],
+    Texture grass,
+    Texture stone,
+    Texture sand)
+{
     for (int y = 0; y < MAP_ROWS; y++) {
         for (int x = 0; x < MAP_COLUMNS; x++) {
-            DrawRectangle(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE, PCG_GetTileColor(_tileArray[y][x]));
+
+            Vector2 pos = { x * TILE_SIZE, y * TILE_SIZE };
+
+            Color tint = _tileTint[y][x];
+
+            if (y >= MAP_ROWS - 3) { // bottom 3 rows
+                DrawTextureEx(sand, pos, 0.0f,
+                    (float)TILE_SIZE / sand.width,
+                    tint);
+                continue;
+            }
+
+            switch (_tileArray[y][x]) {
+            case TILE_TYPE_GRASS:
+                DrawTextureEx(grass, pos, 0.0f, (float)TILE_SIZE / grass.width, tint);//resizes texture to tile size
+                break;
+
+            default: TILE_TYPE_ROCK:
+                DrawTextureEx(stone, pos, 0.0f, (float)TILE_SIZE / stone.width, tint);//ideally an artist problem, but just to show textures working
+                break;
+            }
         }
     }
 }
@@ -62,6 +122,7 @@ char GetTileChar(TileType tileType) {
     switch (tileType) {
     case TILE_TYPE_GRASS: return GRASS_CHAR;
     case TILE_TYPE_ROCK: return ROCK_CHAR;
+    case TILE_TYPE_SAND: return SAND_CHAR;
     default: return '?';
     }
 }
@@ -112,6 +173,9 @@ void PCG_LoadMapData(TileType _tileArray[MAP_ROWS][MAP_COLUMNS], const char* _fi
             }
             else if (ch == ROCK_CHAR) {
                 _tileArray[y][x] = TILE_TYPE_ROCK;
+            }
+            else if (ch == SAND_CHAR) {
+                _tileArray[y][x] = TILE_TYPE_SAND;
             }
         }
     }
@@ -168,4 +232,24 @@ void PCG_DrawGUI(TileType tileArray[MAP_ROWS][MAP_COLUMNS]) {
     if (GuiButton(imgRect, "Save Map PNG")) {
         PCG_SaveMapImage(tileArray, MAP_IMAGE_FILENAME);
     }
+
+    // Grass Slider
+    Rectangle grassSlider = { 100, 100, 200, 20 };
+    GuiSlider(grassSlider, "Min", "Max", &g_grassPercentage, 0.0f, 100.0f);
+    DrawText(TextFormat("Grass Percentage: %.2f", g_grassPercentage), 100, 130, 20, WHITE);
+
+    // Hill Slider
+    Rectangle hillSlider = { 100, 200, 200, 20 };
+    GuiSlider(hillSlider, "Min", "Max", &g_hillPercentage, 0.0f, 100.0f);
+    DrawText(TextFormat("Hill Percentage: %.2f", g_hillPercentage), 100, 230, 20, WHITE);
+
+    // Savefile Naming
+    Rectangle saveFileBox = { 100, 300, 200, 30 };
+    static char g_text[64] = "savefile name here...";//static so we can edit
+    static bool editMode = false;
+    if (GuiTextBox(saveFileBox, g_text, sizeof(g_text), editMode))
+    {
+        editMode = !editMode;
+    }
 }
+

@@ -13,21 +13,26 @@
 typedef enum {
     TILE_TYPE_GRASS = 0,
     TILE_TYPE_ROCK = 1,
+    TILE_TYPE_SAND = 2,
     TILE_COUNT  // Automatically counts total types
 } TileType;
 
 // Visual & Character settings
 #define GRASS_CHAR '.'
 #define ROCK_CHAR '#'
+#define SAND_CHAR 'S'
 #define GRASS_COLOR (DARKGREEN)
 #define ROCK_COLOR (GRAY)
+#define SAND_COLOR (YELLOW)
 #define UNKNOWN_COLOR WHITE
 
 // Function Declarations
 void PCG_CreateMap(TileType _tileArray[MAP_ROWS][MAP_COLUMNS]);
-void PCG_DrawMap(TileType _tileArray[MAP_ROWS][MAP_COLUMNS]);
+void PCG_DrawMap(TileType _tileArray[MAP_ROWS][MAP_COLUMNS], Texture grass, Texture stone, Texture sand);
 void PCG_PrintMap(TileType _tileArray[MAP_ROWS][MAP_COLUMNS]);
 Color PCG_GetTileColor(TileType tileType);
+//added for textures
+Color _tileTint[MAP_ROWS][MAP_COLUMNS];
 
 // File Names
 #define MAP_TEXT_FILENAME "pcg_map_data.txt"
@@ -57,5 +62,12 @@ void PCG_DrawGUI(TileType tileArray[MAP_ROWS][MAP_COLUMNS]);
 #define DOWN 'S'
 #define LEFT 'A'
 #define RIGHT 'D'
+// Player Movespeed
+#define UP_SPEED 5
+#define DOWN_SPEED 5
+#define LEFT_SPEED 5
+#define RIGHT_SPEED 5
+
+
 
 #endif // PCG_H
