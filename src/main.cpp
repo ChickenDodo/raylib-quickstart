@@ -4,14 +4,14 @@
 
 int main() {
     SetConfigFlags(FLAG_VSYNC_HINT | FLAG_WINDOW_HIGHDPI);
-    InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Construct Map Editor");
+    InitWindow(PCG::SCREEN_WIDTH, PCG::SCREEN_HEIGHT, "Construct Map Editor");
 
-    TileType tileArray[MAP_ROWS][MAP_COLUMNS] = { 0 };
-    PCG_CreateMap(tileArray);
+    PCG::TileType tileArray[PCG::MAP_ROWS][PCG::MAP_COLUMNS] = { PCG::TileType::TILE_TYPE_ROCK };
+    PCG::CreateMap(tileArray);
 
     SearchAndSetResourceDir("resources");//needed to add this to make wabbit appear in game
     Texture wabbit = LoadTexture("wabbit_alpha.png");
-    Vector2 wabbitPosition = { (float)SCREEN_WIDTH / 2, (float)SCREEN_HEIGHT / 2 };
+    Vector2 wabbitPosition = { (float)PCG::SCREEN_WIDTH / 2, (float)PCG::SCREEN_HEIGHT / 2 };
 
     Texture stone = LoadTexture("stone.png");
     Texture grass = LoadTexture("grass.png");
@@ -22,8 +22,8 @@ int main() {
         ClearBackground(BLACK);
 
         //Map
-        //PCG_DrawMap(tileArray);
-        PCG_DrawMap(tileArray, grass, stone, sand);
+        //DrawMap(tileArray);
+        PCG::DrawMap(tileArray, grass, stone, sand);
         DrawText("Construct Map Editor", 20, 20, 20, WHITE);
         
         //wabbit
@@ -34,11 +34,14 @@ int main() {
         DrawTexture(wabbit, wabbitPosition.x, wabbitPosition.y, WHITE);
 
         //GUI
-        PCG_DrawGUI(tileArray);
+        PCG::DrawGUI(tileArray);
 
         EndDrawing();
     }
     UnloadTexture(wabbit);
+    UnloadTexture(stone);
+    UnloadTexture(grass);
+    UnloadTexture(sand);
     CloseWindow();
     return 0;
 }
