@@ -5,7 +5,7 @@
 float g_grassPercentage = 50.0f;  
 float g_hillPercentage = 50.0f;
 static char g_text;
-    
+
 // ============================================= 
 // void PCG_CreateMap(TileType _tileArray[MAP_ROWS][MAP_COLUMNS])
 // ============================================= 
@@ -47,7 +47,6 @@ void PCG_CreateMap(TileType _tileArray[MAP_ROWS][MAP_COLUMNS])
     }
 }
 
-
 // ============================================= 
 // Color PCG_GetTileColor(TileType tileType)
 // Return a colour based on the type type input
@@ -60,7 +59,6 @@ Color PCG_GetTileColor(TileType tileType) {
     default: return UNKNOWN_COLOR;
     }
 }
-
 
 // ============================================= 
 // void PCG_DrawMap(TileType _tileArray[MAP_ROWS][MAP_COLUMNS])
@@ -147,7 +145,6 @@ void PCG_SaveMapData(TileType _tileArray[MAP_ROWS][MAP_COLUMNS], const char* _fi
     fclose(file);
     printf("Map saved to %s\n", _filename);
 }
-
 
 // ============================================= 
 // void PCG_LoadMapData(TileType _tileArray[MAP_ROWS][MAP_COLUMNS], const char* _filename)

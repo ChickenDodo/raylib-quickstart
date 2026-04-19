@@ -68,6 +68,4 @@ void PCG_DrawGUI(TileType tileArray[MAP_ROWS][MAP_COLUMNS]);
 #define LEFT_SPEED 5
 #define RIGHT_SPEED 5
 
-
-
 #endif // PCG_H

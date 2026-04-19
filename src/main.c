@@ -17,8 +17,6 @@ int main() {
     Texture grass = LoadTexture("grass.png");
     Texture sand = LoadTexture("sand.png");
 
-
-
     while (!WindowShouldClose()) {
         BeginDrawing();
         ClearBackground(BLACK);
@@ -37,9 +35,6 @@ int main() {
 
         //GUI
         PCG_DrawGUI(tileArray);
-
-
-
 
         EndDrawing();
     }
