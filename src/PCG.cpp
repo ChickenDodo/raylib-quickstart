@@ -2,264 +2,315 @@
 #include <stdio.h>
 #include <iostream>
 #include <fstream>
+// Required to call Raylib gui buttons. Add this near the top of PCG.c
+#define RAYGUI_IMPLEMENTATION
+#include "raygui.h" 
 
-// globals
-float g_grassPercentage = 50.0f;  
-float g_hillPercentage = 50.0f;
-Color PCG::tileTint[MAP_ROWS][MAP_COLUMNS];
-
-// ============================================= 
-// void CreateMap(TileType tileArray[MAP_ROWS][MAP_COLUMNS])
-// ============================================= 
-void PCG::CreateMap(TileType tileArray[MAP_ROWS][MAP_COLUMNS]) {
-    for (int y = 0; y < MAP_ROWS; y++)
-    {
-        for (int x = 0; x < MAP_COLUMNS; x++)
-        {
-            // -------------------------
-            // 1. TERRAIN GENERATION
-            // -------------------------
-
-            if (y >= MAP_ROWS - 3)
-            {
-                tileArray[y][x] = TILE_TYPE_SAND;
-            }
-            else
-            {
-                int roll = GetRandomValue(0, 99);
-
-                if (roll < g_grassPercentage)
-                    tileArray[y][x] = TILE_TYPE_GRASS;
-                else
-                    tileArray[y][x] = TILE_TYPE_ROCK;
-            }
-
-            // -------------------------
-            // 2. TINT GENERATION
-            // -------------------------
-
-            int tintRoll = GetRandomValue(0, 99);
-
-            if (tintRoll < g_hillPercentage)
-                tileTint[y][x] = GRAY;
-            else
-                tileTint[y][x] = WHITE;
-        }
-    }
-}
-
-// ============================================= 
-// Color GetTileColor(TileType tileType)
-// Return a colour based on the type type input
-// ============================================= 
-Color PCG::GetTileColor(PCG::TileType tileType) {
-    switch (tileType) {
-    case TILE_TYPE_GRASS: return GRASS_COLOR;
-    case TILE_TYPE_ROCK: return ROCK_COLOR;
-    case TILE_TYPE_SAND: return SAND_COLOR;
-    default: return UNKNOWN_COLOR;
-    }
-}
-
-// ============================================= 
-// void DrawMap(TileType tileArray[MAP_ROWS][MAP_COLUMNS])
-// ============================================= 
-//void DrawMap(TileType tileArray[MAP_ROWS][MAP_COLUMNS]) {
-//    for (int y = 0; y < MAP_ROWS; y++) {
-//        for (int x = 0; x < MAP_COLUMNS; x++) {
-//            DrawRectangle(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE, GetTileColor(tileArray[y][x]));
-//        }
-//    }
-//}
-
-void PCG::DrawMap(
-    PCG::TileType tileArray[MAP_ROWS][MAP_COLUMNS],
-    Texture2D grass,
-    Texture2D stone,
-    Texture2D sand)
+// =============================================
+// Constructor for our TileMap class.
+// =============================================
+PCG::TileMap::TileMap()
 {
+    // Initialise our tileMap array to all grass tiles by default when we create a new TileMap object. 
+    // We can change this later using the CreateMap() function, or by setting individual tiles with SetTile().
     for (int y = 0; y < MAP_ROWS; y++) {
         for (int x = 0; x < MAP_COLUMNS; x++) {
+            tileArray[y][x] = TILE_TYPE_GRASS;
+        }
+    }
 
-            Vector2 pos = { x * TILE_SIZE, y * TILE_SIZE };
+    // initialise the mapGenerator to null.
+    mapGenerator = nullptr;
+}
 
-            Color tint = tileTint[y][x];
 
-            if (y >= MAP_ROWS - 3) { // bottom 3 rows
-                DrawTextureEx(sand, pos, 0.0f,
-                    (float)TILE_SIZE / sand.width,
-                    tint);
-                continue;
-            }
+// =============================================
+// Destructor for our TileMap class.
+// =============================================
+PCG::TileMap::~TileMap()
+{
+    if (mapGenerator != nullptr) {
+        delete mapGenerator; // Clean up the map generator if it exists
+        mapGenerator = nullptr;
+    }
+}
 
-            switch (tileArray[y][x]) {
-            case TILE_TYPE_GRASS:
-                DrawTextureEx(grass, pos, 0.0f, (float)TILE_SIZE / grass.width, tint);//resizes texture to tile size
-                break;
 
-            case TILE_TYPE_ROCK:
-            default:
-                DrawTextureEx(stone, pos, 0.0f,
-                    (float)TILE_SIZE / stone.width, tint);
-                break;
-            }
+// ============================================= 
+// void CreateMap()
+// ============================================= 
+void PCG::TileMap::CreateMap() {
+    for (int y = 0; y < MAP_ROWS; y++) {
+        for (int x = 0; x < MAP_COLUMNS; x++) {
+            tileArray[y][x] = (TileType)GetRandomValue(0, TILE_COUNT - 1);
         }
     }
 }
 
+
 // ============================================= 
-// void PrintMap(TileType tileArray[MAP_ROWS][MAP_COLUMNS])
+// void SetTile(int x, int y, TileType tileType)
+// set a tile in our tileMap array, using the input x and y coordinates, and the type of tile we want to set it to (tileType)
 // ============================================= 
-void PCG::PrintMap(TileType tileArray[MAP_ROWS][MAP_COLUMNS]) {
-    printf("\n-------Map Layout:--------\n");
-    // (Existing Print Logic here...)
-    printf("--------------------------\n");
+
+void PCG::TileMap::SetTile(int x, int y, TileType tileType)
+{
+    if (x >= 0 && x < MAP_COLUMNS && y >= 0 && y < MAP_ROWS) {
+        tileArray[y][x] = tileType;
+    }
 }
+
+
+// ============================================= 
+// Color PCG_GetTileColor(TileType tileType)
+// Return a colour based on the type type input
+// ============================================= 
+Color PCG::TileMap::GetTileColor(PCG::TileType _tileType) const {
+    switch (_tileType) {
+    case PCG::TileType::TILE_TYPE_GRASS:
+        return GRASS_COLOR;
+    case TILE_TYPE_ROCK:
+        return ROCK_COLOR;
+    default:
+        return UNKNOWN_COLOR;
+    }
+}
+
+
+// ============================================= 
+// void PCG_DrawMap()
+// ============================================= 
+void PCG::TileMap::DrawMap() const {
+    for (int y = 0; y < MAP_ROWS; y++) {
+        for (int x = 0; x < MAP_COLUMNS; x++) {
+            DrawRectangle(x * PCG::TILE_SIZE, y * PCG::TILE_SIZE, PCG::TILE_SIZE, PCG::TILE_SIZE, PCG::TileMap::GetTileColor(tileArray[y][x]));
+        }
+    }
+}
+
+
+// ============================================= 
+// void PCG_PrintMap()
+// ============================================= 
+void PCG::TileMap::PrintMap() const {
+    std::cout << "\n-------Map Layout:--------\n";
+    // (Existing Print Logic here...)
+    std::cout << "--------------------------\n";
+}
+
 
 // ============================================= 
 // char GetTileChar(TileType tileType)
 // Return a char value based on the type of tile passed in
 // ============================================= 
-char PCG::GetTileChar(TileType tileType) {
-    switch (tileType) {
-    case TILE_TYPE_GRASS: return GRASS_CHAR;
-    case TILE_TYPE_ROCK: return ROCK_CHAR;
-    case TILE_TYPE_SAND: return SAND_CHAR;
-    default: return '?';
+char PCG::TileMap::GetTileChar(PCG::TileType _tileType) const {
+    switch (_tileType) {
+    case PCG::TileType::TILE_TYPE_GRASS:
+        return PCG::GRASS_CHAR;
+    case PCG::TileType::TILE_TYPE_ROCK:
+        return PCG::ROCK_CHAR;
+    default:
+        return '?';
     }
 }
 
+
 // ============================================= 
-// void SaveMapData(TileType _tileArray[MAP_ROWS][MAP_COLUMNS], const char* _filename)
+// void PCG_SaveMapData(const char* _filename)
 // Store our tilemap data to a text file using the input _filename
 // ============================================= 
-void PCG::SaveMapData(TileType _tileArray[MAP_ROWS][MAP_COLUMNS], const char* _filename) {
+void PCG::TileMap::SaveMapData(const char* _filename) const {
     std::fstream file;
     file.open(_filename, std::ios::out); // Open C++ file stream for writing
-    //if (file == nullptr) {    // old C-style file open check
     if (!file.is_open()) { // Check if file opened successfully
         return;
     }
 
-    // Write each single tileArray charater into our file stream
+    // Write each single tileArray character into our file stream
     for (int y = 0; y < PCG::MAP_ROWS; y++) {
         for (int x = 0; x < PCG::MAP_COLUMNS; x++) {
-            //fputc(PCG::GetTileChar(_tileArray[y][x]), file);  // old c-style file write
-            file.put(PCG::GetTileChar(_tileArray[y][x])); // Write char to C++ file stream
+            file.put(PCG::TileMap::GetTileChar(tileArray[y][x])); // Write char to C++ file stream
         }
-        //fputc('\n', file); // New line at end of row
+
         file.put('\n'); // New line at end of row for C++ file stream
     }
-    //fclose(file); // old C-style file close
+
     file.close(); // Close C++ file stream
-    std::cout << "Map saved to " << _filename << std::endl;
+    printf("Map saved to %s\n", _filename);
 }
 
+
 // ============================================= 
-// void LoadMapData(TileType _tileArray[MAP_ROWS][MAP_COLUMNS], const char* _filename)
+// void PCG_LoadMapData(const char* _filename)
 // Load our tilemap data from a text file, using input _filename
 // ============================================= 
-void PCG::LoadMapData(TileType _tileArray[MAP_ROWS][MAP_COLUMNS], const char* _filename) {
-    //FILE* file = fopen(_filename, "r"); // "r" = Read // old c style
+void PCG::TileMap::LoadMapData(const char* _filename) {
     std::fstream file;  // C++ file stream object for reading
     file.open(_filename, std::ios::in); // Open C++ file stream for reading
-    //if (file == NULL) {   // old C-style file open check
+
     if (!file.is_open()) { // Check if file opened successfully for C++ stream
         return;
     }
 
+
     // Get each character from our file stream, and load it into our tileMap array
     for (int y = 0; y < PCG::MAP_ROWS; y++) {
         for (int x = 0; x < PCG::MAP_COLUMNS; x++) {
-            //int ch = fgetc(file); // old C-style file read
             int ch = file.get(); // Get char from C++ file stream
             // Skip invisible newline characters
             while (ch == '\n' || ch == '\r') {
-                //ch = fgetc(file); // old C-style file read for skipping newlines
                 ch = file.get(); // Get char from C++ file stream for skipping newlines
             }
 
+
             if (ch == PCG::GRASS_CHAR) {
-                _tileArray[y][x] = PCG::TileType::TILE_TYPE_GRASS;
+                tileArray[y][x] = PCG::TileType::TILE_TYPE_GRASS;
             }
             else if (ch == PCG::ROCK_CHAR) {
-                _tileArray[y][x] = PCG::TileType::TILE_TYPE_ROCK;
+                tileArray[y][x] = PCG::TileType::TILE_TYPE_ROCK;
             }
         }
     }
-    //fclose(file); // old C-style file close
+
     file.close(); // Close C++ file stream
-    // printf("Map loaded from %s\n", _filename);   // old C-style print statement
     std::cout << "Map loaded from " << _filename << std::endl; // C++ style print statement
 }
 
+
 // ============================================= 
-// void SaveMapImage(TileType tileArray[MAP_ROWS][MAP_COLUMNS], const char* filename)
+// void PCG_SaveMapImage(const char* filename)
 // Store our tileMap data as a .png image, using the input filename.
 // ============================================= 
-void PCG::SaveMapImage(TileType tileArray[MAP_ROWS][MAP_COLUMNS], const char* filename) {
-    Image mapImage = GenImageColor(MAP_COLUMNS, MAP_ROWS, BLACK);
+void PCG::TileMap::SaveMapImage(const char* filename) const {
+    Image mapImage = GenImageColor(PCG::MAP_COLUMNS, PCG::MAP_ROWS, BLACK);
 
-    for (int y = 0; y < MAP_ROWS; y++) {
-        for (int x = 0; x < MAP_COLUMNS; x++) {
-            Color c = GetTileColor(tileArray[y][x]);
+    for (int y = 0; y < PCG::MAP_ROWS; y++) {
+        for (int x = 0; x < PCG::MAP_COLUMNS; x++) {
+            Color c = PCG::TileMap::GetTileColor(tileArray[y][x]);
             ImageDrawPixel(&mapImage, x, y, c);
         }
     }
+
     if (ExportImage(mapImage, filename)) {
-        printf("Image saved: %s\n", filename);
+        // printf("Image saved: %s\n", filename); // old C-style print statement
+        std::cout << "Image saved: " << filename << std::endl; // C++ style print statements
     }
+
     UnloadImage(mapImage);
 }
 
-// Required to call Raylib gui buttons. Add this near the top of PCG.c
-#define RAYGUI_IMPLEMENTATION
-#include "raygui.h" 
 
 // ============================================= 
-// void DrawGUI(TileType tileArray[MAP_ROWS][MAP_COLUMNS])
+// void PCG_DrawGUI()
 // ============================================= 
-void PCG::DrawGUI(TileType tileArray[MAP_ROWS][MAP_COLUMNS]) {
+void PCG::TileMap::DrawGUI() {
     // Reset Button
     if (GuiButton(RESET_BUTTON_BOUNDS, "Reset Map")) {
-        CreateMap(tileArray);
+        //CreateMap();
+        // pass in this instances tileArray to our map generator, and call the generate function to fill it with new data.
+        GetMapGenerator()->Generate(tileArray);
     }
 
+
     // Save Data Button
-    Rectangle saveRect = { BUTTON_X, BUTTON_Y - 70, BUTTON_WIDTH, BUTTON_HEIGHT };
+    Rectangle saveRect = { PCG::BUTTON_X, PCG::BUTTON_Y - 70, PCG::BUTTON_WIDTH, PCG::BUTTON_HEIGHT };
     if (GuiButton(saveRect, "Save Map Data")) {
-        SaveMapData(tileArray, MAP_TEXT_FILENAME);
+        SaveMapData(MAP_TEXT_FILENAME);
     }
 
     // Load Data Button
-    Rectangle loadRect = { BUTTON_X, BUTTON_Y - 140, BUTTON_WIDTH, BUTTON_HEIGHT };
+    Rectangle loadRect = { PCG::BUTTON_X, PCG::BUTTON_Y - 140, PCG::BUTTON_WIDTH, PCG::BUTTON_HEIGHT };
     if (GuiButton(loadRect, "Load Map Data")) {
-        LoadMapData(tileArray, MAP_TEXT_FILENAME);
+        LoadMapData(MAP_TEXT_FILENAME);
     }
+
 
     // Save Image Button
-    Rectangle imgRect = { BUTTON_X, BUTTON_Y - 210, BUTTON_WIDTH, BUTTON_HEIGHT };
+    Rectangle imgRect = { PCG::BUTTON_X, PCG::BUTTON_Y - 210, PCG::BUTTON_WIDTH, PCG::BUTTON_HEIGHT };
     if (GuiButton(imgRect, "Save Map PNG")) {
-        SaveMapImage(tileArray, MAP_IMAGE_FILENAME);
-    }
-
-    // Grass Slider
-    Rectangle grassSlider = { 100, 100, 200, 20 };
-    GuiSlider(grassSlider, "Min", "Max", &g_grassPercentage, 0.0f, 100.0f);
-    DrawText(TextFormat("Grass Percentage: %.2f", g_grassPercentage), 100, 130, 20, WHITE);
-
-    // Hill Slider
-    Rectangle hillSlider = { 100, 200, 200, 20 };
-    GuiSlider(hillSlider, "Min", "Max", &g_hillPercentage, 0.0f, 100.0f);
-    DrawText(TextFormat("Hill Percentage: %.2f", g_hillPercentage), 100, 230, 20, WHITE);
-
-    // Savefile Naming
-    Rectangle saveFileBox = { 100, 300, 200, 30 };
-    static char g_text[64] = "savefile name here...";//static so we can edit
-    static bool editMode = false;
-    if (GuiTextBox(saveFileBox, g_text, sizeof(g_text), editMode))
-    {
-        editMode = !editMode;
+        SaveMapImage(MAP_IMAGE_FILENAME);
     }
 }
 
+// =============================================
+// SetMapGenerator and GetMapGenerator functions for our TileMap class, to allow us to assign a map generator to our tilemap, and retrieve it when we want to generate new maps.
+// =============================================
+void PCG::TileMap::SetMapGenerator(PCG::MapGenerator* generator) {
+    mapGenerator = generator;
+}
+
+// =============================================
+// GetMapGenerator returns a pointer to the current map generator assigned to this tilemap, so we can call its Generate function when we want to create new maps.
+// =============================================
+PCG::MapGenerator* PCG::TileMap::GetMapGenerator() const {
+    return mapGenerator;
+}
+
+// =============================================
+// MapGenerator
+// =============================================
+// As it is a pure virtual class, we don't need to implement anything here. The derived classes will provide the actual generation logic.
+
+
+// Derived classes will implement the Generate function to create different types of maps.
+// =============================================
+// RandomMapGenerator
+// =============================================
+// Constructor
+PCG::RandomMapGenerator::RandomMapGenerator() {
+    // nothing to initialize for now, but you could seed a random generator here if you want reproducible maps
+}
+
+// Destructor
+PCG::RandomMapGenerator::~RandomMapGenerator() {
+    // nothing to clean up for now, but if you had allocated resources (like noise generators) you would release them here
+}
+
+void PCG::RandomMapGenerator::Generate(TileType _tileArray[MAP_ROWS][MAP_COLUMNS]) {
+    for (int y = 0; y < MAP_ROWS; y++) {
+        for (int x = 0; x < MAP_COLUMNS; x++) {
+            _tileArray[y][x] = (TileType)GetRandomValue(0, TILE_COUNT - 1);
+        }
+    }
+}
+
+
+// =============================================
+// NoiseGenerator
+// =============================================
+// Constructor
+PCG::NoiseMapGenerator::NoiseMapGenerator() {
+    // nothing to initialize for now, but you could seed a random noise here if you want reproducible maps
+}
+
+// Destructor
+PCG::NoiseMapGenerator::~NoiseMapGenerator() {
+    // nothing to clean up for now, but if you had allocated resources (like noise generators) you would release them here
+}
+
+void PCG::NoiseMapGenerator::Generate(TileType _tileArray[MAP_ROWS][MAP_COLUMNS]) {
+    // Random offsets make the map different every time
+    int offsetX = GetRandomValue(0, 1000);
+    int offsetY = GetRandomValue(0, 1000);
+    float scale = 2.5f;
+
+    // Raylib's Perlin Noise function
+    Image noiseImg = GenImagePerlinNoise(MAP_COLUMNS, MAP_ROWS, offsetX, offsetY, scale);
+
+    for (int y = 0; y < MAP_ROWS; y++) {
+        for (int x = 0; x < MAP_COLUMNS; x++) {
+            // Read the brightness of the noise pixel
+            Color col = GetImageColor(noiseImg, x, y);
+            float brightness = (col.r + col.g + col.b) / (3.0f * 255.0f);
+
+            // Threshold: Dark spots are Rock, Light spots are Grass
+            if (brightness < 0.5f) {
+                _tileArray[y][x] = TILE_TYPE_ROCK;
+            }
+            else {
+                _tileArray[y][x] = TILE_TYPE_GRASS;
+            }
+        }
+    }
+    UnloadImage(noiseImg);
+}
