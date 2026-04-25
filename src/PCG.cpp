@@ -1,10 +1,31 @@
-#include "PCG.h"
+﻿#include "PCG.h"
 #include <stdio.h>
 #include <iostream>
 #include <fstream>
 // Required to call Raylib gui buttons. Add this near the top of PCG.c
 #define RAYGUI_IMPLEMENTATION
 #include "raygui.h" 
+
+// =============================================
+// Texture Handling
+// =============================================
+void PCG::TextureHandler::LoadGameTextures()
+{
+    grassTexture = LoadTexture("resources/grass.png");
+    stoneTexture = LoadTexture("resources/stone.png");
+    sandTexture = LoadTexture("resources/sand.png");
+
+    tileTextures[TILE_TYPE_GRASS] = grassTexture;
+    tileTextures[TILE_TYPE_ROCK] = stoneTexture;
+    tileTextures[TILE_TYPE_SAND] = sandTexture;
+}
+
+void PCG::TextureHandler::UnloadGameTextures()
+{
+    UnloadTexture(grassTexture);
+    UnloadTexture(stoneTexture);
+    UnloadTexture(sandTexture);
+}
 
 // =============================================
 // Constructor for our TileMap class.
@@ -23,7 +44,6 @@ PCG::TileMap::TileMap()
     mapGenerator = nullptr;
 }
 
-
 // =============================================
 // Destructor for our TileMap class.
 // =============================================
@@ -35,7 +55,6 @@ PCG::TileMap::~TileMap()
     }
 }
 
-
 // ============================================= 
 // void CreateMap()
 // ============================================= 
@@ -46,7 +65,6 @@ void PCG::TileMap::CreateMap() {
         }
     }
 }
-
 
 // ============================================= 
 // void SetTile(int x, int y, TileType tileType)
@@ -60,7 +78,6 @@ void PCG::TileMap::SetTile(int x, int y, TileType tileType)
     }
 }
 
-
 // ============================================= 
 // Color PCG_GetTileColor(TileType tileType)
 // Return a colour based on the type type input
@@ -71,23 +88,33 @@ Color PCG::TileMap::GetTileColor(PCG::TileType _tileType) const {
         return GRASS_COLOR;
     case TILE_TYPE_ROCK:
         return ROCK_COLOR;
+    case TILE_TYPE_SAND:
+        return SAND_COLOR;
     default:
         return UNKNOWN_COLOR;
     }
 }
 
-
 // ============================================= 
 // void PCG_DrawMap()
 // ============================================= 
-void PCG::TileMap::DrawMap() const {
-    for (int y = 0; y < MAP_ROWS; y++) {
-        for (int x = 0; x < MAP_COLUMNS; x++) {
-            DrawRectangle(x * PCG::TILE_SIZE, y * PCG::TILE_SIZE, PCG::TILE_SIZE, PCG::TILE_SIZE, PCG::TileMap::GetTileColor(tileArray[y][x]));
+void PCG::TileMap::DrawMap() const
+{
+    for (int y = 0; y < MAP_ROWS; y++)
+    {
+        for (int x = 0; x < MAP_COLUMNS; x++)
+        {
+            TileType tile = tileArray[y][x];
+
+            Texture2D tex = textureHandler.tileTextures[tile];
+
+            float posX = x * TILE_SIZE;
+            float posY = y * TILE_SIZE;
+
+            DrawTextureEx(tex, { posX, posY }, 0.0f, (float)TILE_SIZE / tex.width, WHITE);
         }
     }
 }
-
 
 // ============================================= 
 // void PCG_PrintMap()
@@ -97,7 +124,6 @@ void PCG::TileMap::PrintMap() const {
     // (Existing Print Logic here...)
     std::cout << "--------------------------\n";
 }
-
 
 // ============================================= 
 // char GetTileChar(TileType tileType)
@@ -113,7 +139,6 @@ char PCG::TileMap::GetTileChar(PCG::TileType _tileType) const {
         return '?';
     }
 }
-
 
 // ============================================= 
 // void PCG_SaveMapData(const char* _filename)
@@ -139,7 +164,6 @@ void PCG::TileMap::SaveMapData(const char* _filename) const {
     printf("Map saved to %s\n", _filename);
 }
 
-
 // ============================================= 
 // void PCG_LoadMapData(const char* _filename)
 // Load our tilemap data from a text file, using input _filename
@@ -152,7 +176,6 @@ void PCG::TileMap::LoadMapData(const char* _filename) {
         return;
     }
 
-
     // Get each character from our file stream, and load it into our tileMap array
     for (int y = 0; y < PCG::MAP_ROWS; y++) {
         for (int x = 0; x < PCG::MAP_COLUMNS; x++) {
@@ -161,13 +184,14 @@ void PCG::TileMap::LoadMapData(const char* _filename) {
             while (ch == '\n' || ch == '\r') {
                 ch = file.get(); // Get char from C++ file stream for skipping newlines
             }
-
-
             if (ch == PCG::GRASS_CHAR) {
                 tileArray[y][x] = PCG::TileType::TILE_TYPE_GRASS;
             }
             else if (ch == PCG::ROCK_CHAR) {
                 tileArray[y][x] = PCG::TileType::TILE_TYPE_ROCK;
+            }
+            else if (ch == PCG::SAND_CHAR) {
+                tileArray[y][x] = PCG::TileType::TILE_TYPE_SAND;
             }
         }
     }
@@ -175,7 +199,6 @@ void PCG::TileMap::LoadMapData(const char* _filename) {
     file.close(); // Close C++ file stream
     std::cout << "Map loaded from " << _filename << std::endl; // C++ style print statement
 }
-
 
 // ============================================= 
 // void PCG_SaveMapImage(const char* filename)
@@ -199,6 +222,11 @@ void PCG::TileMap::SaveMapImage(const char* filename) const {
     UnloadImage(mapImage);
 }
 
+// global floats for slider
+float g_sandSliderValue = 50;
+float g_maxTerrainValue = 1;
+float g_grassSliderValue = 0.5;
+float g_rockSliderValue = 0.5;
 
 // ============================================= 
 // void PCG_DrawGUI()
@@ -210,25 +238,43 @@ void PCG::TileMap::DrawGUI() {
         // pass in this instances tileArray to our map generator, and call the generate function to fill it with new data.
         GetMapGenerator()->Generate(tileArray);
     }
-
-
     // Save Data Button
     Rectangle saveRect = { PCG::BUTTON_X, PCG::BUTTON_Y - 70, PCG::BUTTON_WIDTH, PCG::BUTTON_HEIGHT };
     if (GuiButton(saveRect, "Save Map Data")) {
         SaveMapData(MAP_TEXT_FILENAME);
     }
-
     // Load Data Button
     Rectangle loadRect = { PCG::BUTTON_X, PCG::BUTTON_Y - 140, PCG::BUTTON_WIDTH, PCG::BUTTON_HEIGHT };
     if (GuiButton(loadRect, "Load Map Data")) {
         LoadMapData(MAP_TEXT_FILENAME);
     }
-
-
     // Save Image Button
     Rectangle imgRect = { PCG::BUTTON_X, PCG::BUTTON_Y - 210, PCG::BUTTON_WIDTH, PCG::BUTTON_HEIGHT };
     if (GuiButton(imgRect, "Save Map PNG")) {
         SaveMapImage(MAP_IMAGE_FILENAME);
+    }
+    // Sand Slider
+    Rectangle sandLabel = { PCG::BUTTON_X, PCG::BUTTON_Y - 310, PCG::BUTTON_WIDTH, PCG::BUTTON_HEIGHT };
+    if (GuiLabel(sandLabel, "Beach Slider")) {
+    }
+    Rectangle sandSlider = { PCG::BUTTON_X, PCG::BUTTON_Y - 280, PCG::BUTTON_WIDTH, PCG::BUTTON_HEIGHT };
+    if (GuiSlider(sandSlider, "0", "256", &g_sandSliderValue, 0, 256)) {
+    }
+    // Grass Slider
+    Rectangle grassLabel = { PCG::BUTTON_X, PCG::BUTTON_Y - 380, PCG::BUTTON_WIDTH, PCG::BUTTON_HEIGHT };
+    if (GuiLabel(grassLabel, "Grass Slider")) {
+    }
+    Rectangle grassSlider = { PCG::BUTTON_X, PCG::BUTTON_Y - 350, PCG::BUTTON_WIDTH, PCG::BUTTON_HEIGHT };
+    if (GuiSlider(grassSlider, "0%", "100%", &g_grassSliderValue, 0, g_maxTerrainValue)) {
+       g_rockSliderValue = g_maxTerrainValue - g_grassSliderValue;
+    }
+    // Rock Slider
+    Rectangle rockLabel = { PCG::BUTTON_X, PCG::BUTTON_Y - 450, PCG::BUTTON_WIDTH, PCG::BUTTON_HEIGHT };
+    if (GuiLabel(rockLabel, "Rock Slider")) {
+    }
+    Rectangle rockSlider = { PCG::BUTTON_X, PCG::BUTTON_Y - 420, PCG::BUTTON_WIDTH, PCG::BUTTON_HEIGHT };
+    if (GuiSlider(rockSlider, "0%", "100%", &g_rockSliderValue, 0, g_maxTerrainValue)) {
+        g_grassSliderValue = g_maxTerrainValue - g_rockSliderValue;
     }
 }
 
@@ -299,16 +345,21 @@ void PCG::NoiseMapGenerator::Generate(TileType _tileArray[MAP_ROWS][MAP_COLUMNS]
 
     for (int y = 0; y < MAP_ROWS; y++) {
         for (int x = 0; x < MAP_COLUMNS; x++) {
-            // Read the brightness of the noise pixel
             Color col = GetImageColor(noiseImg, x, y);
             float brightness = (col.r + col.g + col.b) / (3.0f * 255.0f);
 
-            // Threshold: Dark spots are Rock, Light spots are Grass
-            if (brightness < 0.5f) {
-                _tileArray[y][x] = TILE_TYPE_ROCK;
+            // sand
+            int sandGrains = 10; // how far the sand grains up the shore
+            int beach = MAP_ROWS - GetRandomValue(g_sandSliderValue + sandGrains, g_sandSliderValue); // how far randomly the sand generates up the shore
+
+            if (y >= beach) {
+                _tileArray[y][x] = TILE_TYPE_SAND;
+            }
+            else if (brightness < g_grassSliderValue) {
+                _tileArray[y][x] = TILE_TYPE_GRASS;
             }
             else {
-                _tileArray[y][x] = TILE_TYPE_GRASS;
+                _tileArray[y][x] = TILE_TYPE_ROCK;
             }
         }
     }

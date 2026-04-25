@@ -13,14 +13,17 @@ namespace PCG {
     typedef enum {
         TILE_TYPE_GRASS = 0,
         TILE_TYPE_ROCK = 1,
+        TILE_TYPE_SAND = 2,
         TILE_COUNT  // Automatically counts total types
     } TileType;
 
     // Visual & Character settings
     constexpr char GRASS_CHAR = '.';
     constexpr char ROCK_CHAR = '#';
-    constexpr Color GRASS_COLOR = { 69, 182, 156, 255 };
-    constexpr Color ROCK_COLOR = { 114, 147, 160, 255 };
+    constexpr char SAND_CHAR = 'S';
+    constexpr Color GRASS_COLOR = GREEN;
+    constexpr Color ROCK_COLOR = GRAY;
+    constexpr Color SAND_COLOR = YELLOW;
     constexpr Color UNKNOWN_COLOR = WHITE;
 
     // UI variable defines used to position buttons on screen
@@ -34,7 +37,18 @@ namespace PCG {
     constexpr char* MAP_TEXT_FILENAME = "pcg_map_data.txt";
     constexpr char* MAP_IMAGE_FILENAME = "pcg_map.png";
 
-    // Pure Virtual Class
+    class TextureHandler {
+    public:
+        // Textures
+        Texture2D grassTexture;
+        Texture2D stoneTexture;
+        Texture2D sandTexture;
+        Texture2D tileTextures[TILE_COUNT];
+
+        void LoadGameTextures();
+        void UnloadGameTextures();
+    };
+
     class MapGenerator {
     public:
         virtual ~MapGenerator() = default; // virtual destructor
@@ -83,6 +97,9 @@ namespace PCG {
         // getter /setter for map generator 
         void SetMapGenerator(MapGenerator* generator);
         MapGenerator* GetMapGenerator() const;
+
+        // handling textures for tiles
+        TextureHandler textureHandler;
 
         // public tile array, for convenience but ideally hidden as private later
         TileType tileArray[MAP_ROWS][MAP_COLUMNS] = { PCG::TileType::TILE_TYPE_ROCK };  // 2D array to hold tile types for the map

@@ -13,7 +13,8 @@ int main() {
     //tileMap.SetMapGenerator(new PCG::RandomMapGenerator());
     tileMap.SetMapGenerator(new PCG::NoiseMapGenerator());
     tileMap.GetMapGenerator()->Generate(tileMap.tileArray); // Generate the map using the selected generator
-
+  
+    tileMap.textureHandler.LoadGameTextures();
     while (!WindowShouldClose()) {
         BeginDrawing();
         ClearBackground(BLACK);
@@ -22,6 +23,7 @@ int main() {
         DrawText("Construct Map Editor", 20, 20, 20, WHITE);
         //PCG::PCG_DrawGUI(tileArray);
         tileMap.DrawGUI();
+
         EndDrawing();
     }
     CloseWindow();
