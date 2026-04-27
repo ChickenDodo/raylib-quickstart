@@ -1,4 +1,5 @@
 #include "raylib.h"
+#include "raygui.h"
 #include "resource_dir.h"
 #include "PCG.h" // Import our new module
 
@@ -13,10 +14,11 @@ int main() {
     //tileMap.SetMapGenerator(new PCG::RandomMapGenerator());
     tileMap.SetMapGenerator(new PCG::NoiseMapGenerator());
     tileMap.GetMapGenerator()->Generate(tileMap.tileArray); // Generate the map using the selected generator
-  
+    
     tileMap.textureHandler.LoadGameTextures();
     while (!WindowShouldClose()) {
         BeginDrawing();
+
         ClearBackground(BLACK);
         //PCG::DrawMap(tileArray); // Function from PCG.c
         tileMap.DrawMap();
@@ -26,6 +28,7 @@ int main() {
 
         EndDrawing();
     }
+    tileMap.textureHandler.UnloadGameTextures();
     CloseWindow();
     return 0;
 }
