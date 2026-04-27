@@ -14,7 +14,8 @@ int main() {
     //tileMap.SetMapGenerator(new PCG::RandomMapGenerator());
     tileMap.SetMapGenerator(new PCG::NoiseMapGenerator());
     tileMap.GetMapGenerator()->Generate(tileMap.tileArray); // Generate the map using the selected generator
-    
+    tileMap.GenerateTileTint();
+
     tileMap.textureHandler.LoadGameTextures();
     while (!WindowShouldClose()) {
         BeginDrawing();

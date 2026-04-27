@@ -66,6 +66,21 @@ void PCG::TileMap::CreateMap() {
     }
 }
 
+float g_tallness = 0.5;
+void PCG::TileMap::GenerateTileTint() {
+    for (int y = 0; y < MAP_ROWS; y++) {
+        for (int x = 0; x < MAP_COLUMNS; x++) {
+
+            float roll = (float)GetRandomValue(0, 100) / 100.0f;
+
+            if (roll > g_tallness)
+                tileTint[y][x] = WHITE;
+            else
+                tileTint[y][x] = LIGHTGRAY;
+        }
+    }
+}
+
 // ============================================= 
 // void SetTile(int x, int y, TileType tileType)
 // set a tile in our tileMap array, using the input x and y coordinates, and the type of tile we want to set it to (tileType)
@@ -110,7 +125,7 @@ void PCG::TileMap::DrawMap() const
             float posX = x * TILE_SIZE;
             float posY = y * TILE_SIZE;
 
-            DrawTextureEx(tex, { posX, posY }, 0.0f, (float)TILE_SIZE / tex.width, WHITE);
+            DrawTextureEx(tex, { posX, posY }, 0.0f, (float)TILE_SIZE / tex.width, tileTint[y][x]);
         }
     }
 }
@@ -208,8 +223,19 @@ void PCG::TileMap::SaveMapImage(const char* filename) const {
 
     for (int y = 0; y < PCG::MAP_ROWS; y++) {
         for (int x = 0; x < PCG::MAP_COLUMNS; x++) {
-            Color c = PCG::TileMap::GetTileColor(tileArray[y][x]);
-            ImageDrawPixel(&mapImage, x, y, c);
+            //Color c = PCG::TileMap::GetTileColor(tileArray[y][x]);
+            //ImageDrawPixel(&mapImage, x, y, c);
+            Color base = GetTileColor(tileArray[y][x]);
+            Color tint = tileTint[y][x];
+
+            // grab rectangle colours and tints to mush em together in the export
+            Color finalColor;
+            finalColor.r = (base.r * tint.r) / 255;
+            finalColor.g = (base.g * tint.g) / 255;
+            finalColor.b = (base.b * tint.b) / 255;
+            finalColor.a = 255;
+
+            ImageDrawPixel(&mapImage, x, y, finalColor);
         }
     }
 
@@ -221,11 +247,13 @@ void PCG::TileMap::SaveMapImage(const char* filename) const {
     UnloadImage(mapImage);
 }
 
-// global floats for slider
+// globals for inputs
 float g_sandSliderValue = 50;
 float g_maxTerrainValue = 1;
 float g_grassSliderValue = 0.5;
 float g_rockSliderValue = 0.5;
+float g_crunchiness = 2.5;
+char g_savename[64] = "";
 
 // ============================================= 
 // void PCG_DrawGUI()
@@ -236,21 +264,24 @@ void PCG::TileMap::DrawGUI() {
         //CreateMap();
         // pass in this instances tileArray to our map generator, and call the generate function to fill it with new data.
         GetMapGenerator()->Generate(tileArray);
+        GenerateTileTint();
     }
     // Save Data Button
     Rectangle saveRect = { PCG::BUTTON_X, PCG::BUTTON_Y - 70, PCG::BUTTON_WIDTH, PCG::BUTTON_HEIGHT };
     if (GuiButton(saveRect, "Save Map Data")) {
-        SaveMapData(MAP_TEXT_FILENAME);
+        const char* filename = TextFormat("%s.txt", g_savename);
+        SaveMapData(filename);
     }
     // Load Data Button
     Rectangle loadRect = { PCG::BUTTON_X, PCG::BUTTON_Y - 140, PCG::BUTTON_WIDTH, PCG::BUTTON_HEIGHT };
     if (GuiButton(loadRect, "Load Map Data")) {
-        LoadMapData(MAP_TEXT_FILENAME);
+        LoadMapData(g_savename);
     }
     // Save Image Button
     Rectangle imgRect = { PCG::BUTTON_X, PCG::BUTTON_Y - 210, PCG::BUTTON_WIDTH, PCG::BUTTON_HEIGHT };
     if (GuiButton(imgRect, "Save Map PNG")) {
-        SaveMapImage(MAP_IMAGE_FILENAME);
+        const char* filename = TextFormat("%s.png", g_savename);
+        SaveMapImage(filename);
     }
     // Sand Slider
     Rectangle sandLabel = { PCG::BUTTON_X, PCG::BUTTON_Y - 310, PCG::BUTTON_WIDTH, PCG::BUTTON_HEIGHT };
@@ -274,6 +305,29 @@ void PCG::TileMap::DrawGUI() {
     Rectangle rockSlider = { PCG::BUTTON_X, PCG::BUTTON_Y - 420, PCG::BUTTON_WIDTH, PCG::BUTTON_HEIGHT };
     if (GuiSlider(rockSlider, "0%", "100%", &g_rockSliderValue, 0, g_maxTerrainValue)) {
         g_grassSliderValue = g_maxTerrainValue - g_rockSliderValue;
+    }
+    // Tallness Slider
+    Rectangle tallLabel = { PCG::BUTTON_X, PCG::BUTTON_Y - 520, PCG::BUTTON_WIDTH, PCG::BUTTON_HEIGHT };
+    if (GuiLabel(tallLabel, "Height Slider")) {
+    }
+    Rectangle tallSlider = { PCG::BUTTON_X, PCG::BUTTON_Y - 490, PCG::BUTTON_WIDTH, PCG::BUTTON_HEIGHT };
+    if (GuiSlider(tallSlider, "0%", "100%", &g_tallness, 0, g_maxTerrainValue)) {
+
+    }
+    // Crunchiness Slider
+    Rectangle crunchyLabel = { PCG::BUTTON_X, PCG::BUTTON_Y - 590, PCG::BUTTON_WIDTH, PCG::BUTTON_HEIGHT };
+    if (GuiLabel(crunchyLabel, "Crunchy Slider")) {
+    }
+    Rectangle crunchySlider = { PCG::BUTTON_X, PCG::BUTTON_Y - 560, PCG::BUTTON_WIDTH, PCG::BUTTON_HEIGHT };
+    if (GuiSlider(crunchySlider, "0", "80", &g_crunchiness, 0, 80)) {
+    }
+    // Savefile Naming
+    Rectangle saveFileBox = { 100, 300, 200, 30 };
+    static bool editMode = false;
+
+    if (GuiTextBox(saveFileBox, g_savename, sizeof(g_savename), editMode))
+    {
+        editMode = !editMode;
     }
 }
 
@@ -336,10 +390,9 @@ void PCG::NoiseMapGenerator::Generate(TileType _tileArray[MAP_ROWS][MAP_COLUMNS]
     // Random offsets make the map different every time
     int offsetX = GetRandomValue(0, 1000);
     int offsetY = GetRandomValue(0, 1000);
-    float scale = 2.5f;
 
     // Raylib's Perlin Noise function
-    Image noiseImg = GenImagePerlinNoise(MAP_COLUMNS, MAP_ROWS, offsetX, offsetY, scale);
+    Image noiseImg = GenImagePerlinNoise(MAP_COLUMNS, MAP_ROWS, offsetX, offsetY, g_crunchiness);
 
     for (int y = 0; y < MAP_ROWS; y++) {
         for (int x = 0; x < MAP_COLUMNS; x++) {

@@ -93,6 +93,7 @@ namespace PCG {
         void SetTile(int x, int y, PCG::TileType tileType);
         Color GetTileColor(TileType tileType) const;
         char GetTileChar(TileType tileType) const;
+        void GenerateTileTint();
 
         // getter /setter for map generator 
         void SetMapGenerator(MapGenerator* generator);
@@ -103,6 +104,8 @@ namespace PCG {
 
         // public tile array, for convenience but ideally hidden as private later
         TileType tileArray[MAP_ROWS][MAP_COLUMNS] = { PCG::TileType::TILE_TYPE_ROCK };  // 2D array to hold tile types for the map
+        // colour for tinting tiles to simulate heightmap
+        Color tileTint[MAP_ROWS][MAP_COLUMNS];
 
     private:
         MapGenerator* mapGenerator;
