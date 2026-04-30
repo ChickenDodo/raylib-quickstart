@@ -19,7 +19,7 @@ void PCG::TextureHandler::LoadGameTextures()
     tileTextures[TILE_TYPE_ROCK] = stoneTexture;
     tileTextures[TILE_TYPE_SAND] = sandTexture;
 }
-
+    
 void PCG::TextureHandler::UnloadGameTextures()
 {
     UnloadTexture(grassTexture);
@@ -125,7 +125,7 @@ void PCG::TileMap::DrawMap() const
             float posX = x * TILE_SIZE;
             float posY = y * TILE_SIZE;
 
-            DrawTextureEx(tex, { posX, posY }, 0.0f, (float)TILE_SIZE / tex.width, tileTint[y][x]);
+            DrawTextureEx(tex, { posX, posY }, 0.0f, (float)TILE_SIZE / tex.width, tileTint[y][x]); //scale texture to image
         }
     }
 }
@@ -243,7 +243,6 @@ void PCG::TileMap::SaveMapImage(const char* filename) const {
         // printf("Image saved: %s\n", filename); // old C-style print statement
         std::cout << "Image saved: " << filename << std::endl; // C++ style print statements
     }
-
     UnloadImage(mapImage);
 }
 
