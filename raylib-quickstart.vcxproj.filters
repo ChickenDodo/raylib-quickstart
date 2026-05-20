@@ -18,7 +18,7 @@
     <ClInclude Include="include\resource_dir.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\PCG.h">
+    <ClInclude Include="include\maze.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\raygui.h">

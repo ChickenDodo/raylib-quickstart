@@ -1,5 +1,4 @@
-﻿// Maze.cpp
-#include "PCG.h"
+﻿#include "maze.h"
 
 Tile maze[MAZE_WIDTH][MAZE_HEIGHT];
 
@@ -155,4 +154,18 @@ void RegenerateMaze() {
     GenerateMaze(1, 1);
 
     ExportMazeTXT("maze.txt");
+}
+
+void MazeSlider() {
+    // Slider
+    sliderValue = GuiSlider(
+        (Rectangle) {
+        20, 150, 200, 20
+    },
+        "Low",
+        "High",
+        sliderValue,
+        0.0f,
+        100.0f
+    );
 }

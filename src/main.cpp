@@ -1,5 +1,5 @@
-// main.cpp
-#include "PCG.h"
+//https://www.youtube.com/watch?v=mh7X_I7uKHM
+#include "maze.h"
 #include <stdlib.h>
 #include <time.h>
 
@@ -11,7 +11,7 @@ int main() {
         "Tile Maze Generator"
     );
 
-    srand(time(NULL));
+    srand(time(NULL)); //set random seed
 
     RegenerateMaze();
 
@@ -27,7 +27,7 @@ int main() {
 
         BeginDrawing();
 
-        ClearBackground(BLACK);
+        ClearBackground(BLUE);
 
         DrawMaze();
 

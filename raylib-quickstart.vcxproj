@@ -301,7 +301,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="include\PCG.h" />
+    <ClInclude Include="include\maze.h" />
     <ClInclude Include="include\resource_dir.h" />
     <ClInclude Include="src\raygui.h" />
   </ItemGroup>

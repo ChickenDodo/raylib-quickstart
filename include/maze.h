@@ -34,3 +34,5 @@ void ExportMazeTXT(const char* filename);
 void DrawMaze();
 
 void RegenerateMaze();
+
+void MazeSlider();
