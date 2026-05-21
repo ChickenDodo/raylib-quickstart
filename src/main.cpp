@@ -1,17 +1,18 @@
-//https://www.youtube.com/watch?v=mh7X_I7uKHM
 #include "maze.h"
-#include <stdlib.h>
-#include <time.h>
+#include <ctime>
+
+#define RAYGUI_IMPLEMENTATION
+#include "raygui.h"
 
 int main() {
 
-    InitWindow(
-        SCREEN_WIDTH,
-        SCREEN_HEIGHT,
-        "Tile Maze Generator"
-    );
+    SetConfigFlags(FLAG_WINDOW_RESIZABLE);
+    InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Maze");
 
-    srand(time(NULL)); //set random seed
+    srand(time(NULL));
+
+    GuiSetStyle(DEFAULT, TEXT_SIZE, 18);
+    GuiSetStyle(DEFAULT, TEXT_COLOR_NORMAL, 0xFFFFFFFF);
 
     RegenerateMaze();
 
@@ -19,30 +20,19 @@ int main() {
 
     while (!WindowShouldClose()) {
 
-        // Press R to regenerate
         if (IsKeyPressed(KEY_R)) {
-
             RegenerateMaze();
         }
 
         BeginDrawing();
 
-        ClearBackground(BLUE);
+        ClearBackground(DARKGRAY);
 
         DrawMaze();
-
-        DrawText(
-            "Press R to regenerate/export maze.txt",
-            10,
-            10,
-            20,
-            RED
-        );
+        DrawGUI();
 
         EndDrawing();
     }
 
     CloseWindow();
-
-    return 0;
 }

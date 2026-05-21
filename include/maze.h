@@ -3,36 +3,36 @@
 #include "raylib.h"
 #include <fstream>
 
-// Screen
-#define SCREEN_WIDTH 1000
-#define SCREEN_HEIGHT 1000
+// ===================== CONFIG =====================
+constexpr int SCREEN_WIDTH = 500;
+constexpr int SCREEN_HEIGHT = 500;
 
-// Tile size
-#define TILE_SIZE 20
+constexpr int TILE_SIZE = 20;
+constexpr int MAX_SIZE = 19;
 
-// Must be odd numbers for proper maze generation
-#define MAZE_WIDTH  9
-#define MAZE_HEIGHT 9
+constexpr int DEFAULT_MAZE_WIDTH = 9;
+constexpr int DEFAULT_MAZE_HEIGHT = 9;
 
-typedef struct {
+// ===================== DATA =====================
+struct Tile {
+    bool wall = true;
+    bool visited = false;
+};
 
-    bool wall;      // whether it's a wall
-    bool visited;   // whether it's been visited by algorithm
+extern Tile maze[MAX_SIZE][MAX_SIZE];
+extern int mazeWidth;
+extern int mazeHeight;
 
-} Tile;
+extern float g_mazeWidthSlider;
+extern float g_mazeHeightSlider;
 
-// Global maze grid
-extern Tile maze[MAZE_WIDTH][MAZE_HEIGHT];
-
-// Functions
+// ===================== FUNCTIONS =====================
 void InitialiseMaze();
-
 void GenerateMaze(int x, int y);
-
 void ExportMazeTXT(const char* filename);
 
 void DrawMaze();
+void DrawGUI();
 
 void RegenerateMaze();
-
-void MazeSlider();
+void ApplyMazeSizeFromSliders();
