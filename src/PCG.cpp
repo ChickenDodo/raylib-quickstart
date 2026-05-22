@@ -13,7 +13,7 @@ int mazeHeight = DEFAULT_MAZE_HEIGHT;
 void InitialiseMaze() {
 
     /*
-    Fill entire grid with walls first
+    Fill entire grid with unvisted walls
 
     W W W W
     W W W W
@@ -154,7 +154,6 @@ void DrawMaze() {
 }
 
 void RegenerateMaze() {
-
     InitialiseMaze();
     GenerateMaze(1, 1);
     ExportMazeTXT("maze.txt");
