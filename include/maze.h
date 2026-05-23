@@ -4,11 +4,11 @@
 #include <fstream>
 
 // ===================== CONFIG =====================
-constexpr int SCREEN_WIDTH = 500;
-constexpr int SCREEN_HEIGHT = 500;
+constexpr int SCREEN_WIDTH = 1024;
+constexpr int SCREEN_HEIGHT = 1024;
 
-constexpr int TILE_SIZE = 20;
-constexpr int MAX_SIZE = 19;
+constexpr int MAX_SIZE = 99; //ANYTHING SOMEWHAT HIGHER THAN THIS PRODUCES STACKOVERFLOW!!! recursive backtracking is inefficient for big mazes 
+constexpr int DEFAULT_TILE_SIZE = 20;
 
 constexpr int DEFAULT_MAZE_WIDTH = 9;
 constexpr int DEFAULT_MAZE_HEIGHT = 9;

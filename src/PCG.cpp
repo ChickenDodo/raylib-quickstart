@@ -4,6 +4,7 @@
 Tile maze[MAX_SIZE][MAX_SIZE];
 int mazeWidth = DEFAULT_MAZE_WIDTH;
 int mazeHeight = DEFAULT_MAZE_HEIGHT;
+int tileSize = DEFAULT_TILE_SIZE;
 
 // =============================================
 // Maze generation reference
@@ -13,7 +14,7 @@ int mazeHeight = DEFAULT_MAZE_HEIGHT;
 void InitialiseMaze() {
 
     /*
-    Fill entire grid with unvisted walls
+    Fill entire grid with unvisIted walls
 
     W W W W
     W W W W
@@ -30,7 +31,7 @@ void InitialiseMaze() {
     }
 }
 
-void GenerateMaze(int x, int y) { //recursive backtacking, carve a path, if it's invalid, undo,
+void GenerateMaze(int x, int y) { //recursive backtRacking, carve a path, if it's invalid, undo,
 
     /*
     Starting point becomes a path
@@ -137,16 +138,16 @@ void DrawMaze() {
     for (int x = 0; x < mazeWidth; x++) {
         for (int y = 0; y < mazeHeight; y++) {
 
-            // If it's a wall → BLACK
-            // If it's a path → WHITE
+            // If it's a wall, BLACK
+            // If it's a path, WHITE
             Color color = maze[x][y].wall ? BLACK : WHITE;
 
             // Draw a square for each tile
             DrawRectangle(
-                x * TILE_SIZE,
-                y * TILE_SIZE + MAZE_OFFSET_Y, // shift down by offset
-                TILE_SIZE,
-                TILE_SIZE,
+                x * tileSize,
+                y * tileSize + MAZE_OFFSET_Y, // shift down by offset
+                tileSize,
+                tileSize,
                 color
             );
         }
@@ -154,9 +155,9 @@ void DrawMaze() {
 }
 
 void RegenerateMaze() {
+    ExportMazeTXT("maze.txt");
     InitialiseMaze();
     GenerateMaze(1, 1);
-    ExportMazeTXT("maze.txt");
 }
 
 // =============================================
@@ -212,9 +213,9 @@ void DrawGUI() {
 
     GuiSlider(
         { x, y + lineGap, sliderWidth, sliderHeight },
-        "3", "19",
+        "3", TextFormat("%i", MAX_SIZE),
         &g_mazeWidthSlider,
-        3, 19
+        3, MAX_SIZE
     );
 
     // HEIGHT
@@ -225,9 +226,9 @@ void DrawGUI() {
 
     GuiSlider(
         { x, y + spacing + lineGap, sliderWidth, sliderHeight },
-        "3", "19",
+        "3", TextFormat("%i", MAX_SIZE),
         &g_mazeHeightSlider,
-        3, 19
+        3, MAX_SIZE
     );
 
     // enforce odd sizes
@@ -238,6 +239,12 @@ void DrawGUI() {
     if (oldW != g_mazeWidthSlider || oldH != g_mazeHeightSlider)
     {
         ApplyMazeSizeFromSliders();
+
+        tileSize = std::min(
+            (GetScreenWidth() - 300) / mazeWidth,
+            (GetScreenHeight() - 40) / mazeHeight
+        );
+
         RegenerateMaze();
 
         oldW = g_mazeWidthSlider;

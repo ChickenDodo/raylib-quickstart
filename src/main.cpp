@@ -8,7 +8,7 @@ int main() {
 
     SetConfigFlags(FLAG_WINDOW_RESIZABLE);
     InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Maze");
-
+    MaximizeWindow();
     srand(time(NULL));
 
     GuiSetStyle(DEFAULT, TEXT_SIZE, 18);
